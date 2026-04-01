@@ -7,336 +7,170 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- Chosen Palette: Slate & Crimson (Minimalismo médico y energía deportiva) -->
     <!-- Application Structure Plan: 
-         Versión Blindada Final:
-         1. Endpoint estable: Usa la API v1 (no beta) para evitar errores 404 de modelos no encontrados.
-         2. Inyección de Key: La llave proporcionada por el usuario se integra directamente para evitar errores de pegado.
-         3. SPA robusta: Navegación por IDs y clases de Tailwind para evitar recargas en GitHub Pages.
-         4. Gráficos: Visualización de datos de salud basados en investigación real.
+         Versión de Máxima Compatibilidad:
+         1. Limpieza de Llave: Elimina espacios, comillas y saltos de línea accidentales.
+         2. Endpoint Universal: Utiliza v1beta que es el más aceptado para Gemini 1.5 Flash.
+         3. Debugging Activo: Si falla, muestra el error detallado para saber si es la llave o la cuota.
     -->
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
-        
-        body {
-            font-family: 'Outfit', sans-serif;
-            background-color: #F8FAFC;
-            color: #1E293B;
-            scroll-behavior: smooth;
-        }
-
-        .section-view {
-            display: none;
-            animation: fadeIn 0.4s ease-out forwards;
-        }
-
-        .section-view.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .nav-link.active {
-            color: #EF4444 !important;
-            border-bottom: 2px solid #EF4444;
-        }
-
-        .chart-container {
-            position: relative;
-            width: 100%;
-            height: 350px;
-            max-height: 400px;
-            margin: auto;
-        }
-
-        .spinner {
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-top-color: #fff;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            display: inline-block;
-        }
+        body { font-family: 'Outfit', sans-serif; background-color: #F8FAFC; color: #1E293B; margin: 0; scroll-behavior: smooth; }
+        .section-view { display: none; }
+        .section-view.active { display: block; animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .nav-btn.active { color: #EF4444 !important; border-bottom: 2px solid #EF4444; }
+        .chart-container { position: relative; height: 350px; width: 100%; }
+        .spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
         @keyframes spin { to { transform: rotate(360deg); } }
-
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
     </style>
 </head>
 <body class="antialiased">
 
-    <!-- MENÚ DE NAVEGACIÓN -->
-    <nav class="bg-white/90 backdrop-blur-md border-b border-slate-200 sticky top-0 z-[100] shadow-sm">
+    <!-- NAVEGACIÓN -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-[100] shadow-sm">
         <div class="max-w-6xl mx-auto px-6 h-16 flex justify-between items-center">
             <div onclick="showSection('inicio')" class="flex items-center space-x-2 cursor-pointer group">
                 <span class="text-2xl group-hover:rotate-12 transition-transform">🏓</span>
-                <span class="text-xl font-bold tracking-tight">PingPong<span class="text-red-500">+65</span></span>
+                <span class="text-xl font-bold">PingPong<span class="text-red-500">+65</span></span>
             </div>
-            
             <div class="hidden md:flex space-x-8 h-full items-center">
-                <button onclick="showSection('inicio')" id="nav-inicio" class="nav-link h-full px-1 font-semibold hover:text-red-500 transition">Inicio</button>
-                <button onclick="showSection('beneficios')" id="nav-beneficios" class="nav-link h-full px-1 font-semibold hover:text-red-500 transition">Beneficios</button>
-                <button onclick="showSection('asistente')" id="nav-asistente" class="nav-link h-full px-1 font-semibold text-red-600 bg-red-50 rounded-lg px-4 flex items-center">Asistente AI ✨</button>
-                <button onclick="showSection('ciencia')" id="nav-ciencia" class="nav-link h-full px-1 font-semibold hover:text-red-500 transition">Ciencia</button>
+                <button onclick="showSection('inicio')" id="nav-inicio" class="nav-btn h-full px-1 font-semibold hover:text-red-500 transition">Inicio</button>
+                <button onclick="showSection('beneficios')" id="nav-beneficios" class="nav-btn h-full px-1 font-semibold hover:text-red-500 transition">Beneficios</button>
+                <button onclick="showSection('asistente')" id="nav-asistente" class="nav-btn h-full px-4 font-semibold text-red-600 bg-red-50 rounded-lg flex items-center">Asistente AI ✨</button>
+                <button onclick="showSection('ciencia')" id="nav-ciencia" class="nav-btn h-full px-1 font-semibold hover:text-red-500 transition">Ciencia</button>
             </div>
-
-            <div class="md:hidden text-2xl">☰</div>
         </div>
     </nav>
 
-    <main class="min-h-[80vh]">
-
-        <!-- VISTA: INICIO -->
-        <section id="sec-inicio" class="section-view active max-w-6xl mx-auto px-6 py-16 md:py-24">
+    <main>
+        <!-- INICIO -->
+        <section id="sec-inicio" class="section-view active max-w-6xl mx-auto px-6 py-16 md:py-24 text-center lg:text-left">
             <div class="grid lg:grid-cols-2 gap-16 items-center">
                 <div>
-                    <div class="inline-block bg-red-100 text-red-600 px-4 py-1 rounded-full text-xs font-bold mb-4 uppercase tracking-widest">Envejecimiento Saludable</div>
-                    <h1 class="text-5xl md:text-6xl font-black text-slate-900 leading-tight">
-                        Cuerpo en forma, <br><span class="text-red-500 text-6xl md:text-7xl">mente ágil</span>.
-                    </h1>
-                    <p class="text-xl text-slate-600 mt-6 leading-relaxed">
-                        El tenis de mesa es el deporte más recomendado para mayores de 65 años. Mejora la reserva cognitiva y el equilibrio dinámico mediante la toma de decisiones rápida.
-                    </p>
-                    <div class="mt-10 flex flex-wrap gap-4">
-                        <button onclick="showSection('beneficios')" class="bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold shadow-xl hover:bg-black transition transform hover:-translate-y-1">
-                            Ver Beneficios
-                        </button>
-                        <button onclick="showSection('asistente')" class="bg-white border-2 border-red-500 text-red-500 px-8 py-4 rounded-2xl font-bold hover:bg-red-50 transition">
-                            Probar Asistente ✨
-                        </button>
+                    <h1 class="text-5xl md:text-6xl font-black text-slate-900 leading-tight">Mente sana en <br><span class="text-red-500">cuerpo activo</span>.</h1>
+                    <p class="text-xl text-slate-600 mt-6 leading-relaxed">El tenis de mesa mejora el equilibrio y protege el cerebro de los mayores de 65 años. Únete a la revolución deportiva.</p>
+                    <div class="mt-10 flex flex-wrap justify-center lg:justify-start gap-4">
+                        <button onclick="showSection('beneficios')" class="bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold shadow-xl">Ver Datos</button>
+                        <button onclick="showSection('asistente')" class="bg-white border-2 border-red-500 text-red-500 px-8 py-4 rounded-2xl font-bold">Usar IA ✨</button>
                     </div>
                 </div>
-                <div class="flex justify-center">
-                    <div class="w-full max-w-md aspect-square bg-white rounded-[3.5rem] shadow-2xl flex items-center justify-center text-[10rem] border border-slate-100">
-                        🏓
-                    </div>
-                </div>
+                <div class="flex justify-center text-[10rem]">🏓</div>
             </div>
         </section>
 
-        <!-- VISTA: BENEFICIOS -->
+        <!-- BENEFICIOS -->
         <section id="sec-beneficios" class="section-view max-w-6xl mx-auto px-6 py-16">
-            <div class="text-center mb-16">
-                <h2 class="text-4xl font-bold text-slate-900">Análisis Científico</h2>
-                <p class="text-slate-500 mt-4">Evidencia extraída de investigaciones de PubMed y ResearchGate.</p>
-            </div>
-
+            <h2 class="text-4xl font-bold text-center mb-12">Impacto en la Salud</h2>
             <div class="grid md:grid-cols-3 gap-6 mb-12">
-                <div onclick="updateChart('fisico')" class="cursor-pointer p-8 rounded-3xl bg-white border border-slate-200 hover:border-red-500 shadow-sm transition-all group text-center">
-                    <div class="text-3xl mb-4 group-hover:scale-110 transition">🏃‍♂️</div>
-                    <h3 class="text-xl font-bold group-hover:text-red-500 transition">Físico</h3>
-                </div>
-                <div onclick="updateChart('mental')" class="cursor-pointer p-8 rounded-3xl bg-white border border-slate-200 hover:border-red-500 shadow-sm transition-all group text-center">
-                    <div class="text-3xl mb-4 group-hover:scale-110 transition">🧠</div>
-                    <h3 class="text-xl font-bold group-hover:text-red-500 transition">Mental</h3>
-                </div>
-                <div onclick="updateChart('social')" class="cursor-pointer p-8 rounded-3xl bg-white border border-slate-200 hover:border-red-500 shadow-sm transition-all group text-center">
-                    <div class="text-3xl mb-4 group-hover:scale-110 transition">👥</div>
-                    <h3 class="text-xl font-bold group-hover:text-red-500 transition">Social</h3>
-                </div>
+                <button onclick="updateChart('fisico')" class="p-8 bg-white border rounded-[2rem] shadow-sm hover:border-red-500 transition">🏃‍♂️ <b>Físico</b></button>
+                <button onclick="updateChart('mental')" class="p-8 bg-white border rounded-[2rem] shadow-sm hover:border-red-500 transition">🧠 <b>Mental</b></button>
+                <button onclick="updateChart('social')" class="p-8 bg-white border rounded-[2rem] shadow-sm hover:border-red-500 transition">👥 <b>Social</b></button>
             </div>
-
-            <div class="bg-white rounded-[2.5rem] border border-slate-200 p-8 md:p-12 shadow-sm grid lg:grid-cols-2 gap-12 items-center">
+            <div class="bg-white rounded-[2.5rem] border p-8 grid lg:grid-cols-2 gap-12 items-center shadow-sm">
                 <div>
-                    <h3 id="chart-title" class="text-3xl font-bold text-slate-900 leading-tight">Salud Integral</h3>
-                    <p id="chart-desc" class="text-lg text-slate-600 mt-4 italic">Haz clic en una categoría para analizar los beneficios.</p>
-                    <ul id="chart-list" class="mt-8 space-y-4 text-slate-700"></ul>
+                    <h3 id="chart-title" class="text-3xl font-bold">Análisis Académico</h3>
+                    <p id="chart-desc" class="text-lg text-slate-600 mt-4 italic">Evidencia basada en PubMed.</p>
+                    <ul id="chart-list" class="mt-8 space-y-4"></ul>
                 </div>
-                <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100">
-                    <div class="chart-container">
-                        <canvas id="healthChart"></canvas>
-                    </div>
-                </div>
+                <div class="chart-container"><canvas id="healthChart"></canvas></div>
             </div>
         </section>
 
-        <!-- VISTA: ASISTENTE AI -->
-        <section id="sec-asistente" class="section-view bg-slate-950 min-h-[85vh] py-16">
-            <div class="max-w-6xl mx-auto px-6">
-                <div class="text-center text-white mb-16">
+        <!-- ASISTENTE AI -->
+        <section id="sec-asistente" class="section-view bg-slate-900 min-h-[85vh] py-16 px-6">
+            <div class="max-w-6xl mx-auto text-white">
+                <div class="text-center mb-12">
                     <h2 class="text-4xl font-bold">Asistente Inteligente ✨</h2>
-                    <p class="text-slate-400 mt-2">Planes personalizados y consultas académicas.</p>
+                    <p class="text-slate-400">Planes personalizados generados por IA.</p>
                 </div>
-
                 <div class="grid lg:grid-cols-2 gap-12">
-                    <!-- Planificador -->
-                    <div class="bg-slate-900 p-8 rounded-[2.5rem] border border-slate-800 text-white shadow-2xl flex flex-col">
-                        <h3 class="text-xl font-bold mb-8 flex items-center"><span class="mr-3">🗓️</span> Plan Semanal</h3>
+                    <div class="bg-slate-800 p-8 rounded-[2.5rem] shadow-2xl">
+                        <h3 class="text-xl font-bold mb-8">Plan Semanal</h3>
                         <div class="space-y-6">
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Mi Nivel:</label>
-                                <select id="ai-level" class="w-full bg-slate-800 border-none p-4 rounded-xl outline-none focus:ring-2 focus:ring-red-500 transition">
-                                    <option value="principiante">Principiante (Desde cero)</option>
-                                    <option value="intermedio">Intermedio (Juego regular)</option>
-                                    <option value="avanzado">Avanzado (Jugador de club)</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Meta Principal:</label>
-                                <select id="ai-goal" class="w-full bg-slate-800 border-none p-4 rounded-xl outline-none focus:ring-2 focus:ring-red-500 transition">
-                                    <option value="equilibrio">Mejorar Equilibrio</option>
-                                    <option value="cognitivo">Salud Cerebral / Memoria</option>
-                                    <option value="social">Integración Social</option>
-                                </select>
-                            </div>
-                            <button onclick="runAiAction('plan')" id="btn-plan" class="w-full bg-red-600 hover:bg-red-700 py-4 rounded-xl font-bold transition flex justify-center items-center shadow-lg">
-                                Generar Plan Semanal
-                            </button>
+                            <select id="ai-level" class="w-full bg-slate-700 p-4 rounded-xl border-none outline-none"><option value="principiante">Principiante</option><option value="intermedio">Intermedio</option></select>
+                            <select id="ai-goal" class="w-full bg-slate-700 p-4 rounded-xl border-none outline-none"><option value="equilibrio">Equilibrio</option><option value="memoria">Agilidad Mental</option></select>
+                            <button onclick="runAiAction('plan')" id="btn-plan" class="w-full bg-red-600 py-4 rounded-xl font-bold hover:bg-red-700 transition">Generar Plan</button>
                         </div>
-                        <div id="ai-plan-output" class="mt-8 bg-black/40 p-6 rounded-2xl hidden flex-grow overflow-y-auto max-h-[350px] custom-scrollbar text-slate-300 leading-relaxed text-sm"></div>
+                        <div id="ai-plan-output" class="mt-8 bg-black/30 p-6 rounded-2xl hidden max-h-80 overflow-y-auto custom-scrollbar text-sm leading-relaxed"></div>
                     </div>
-
-                    <!-- Consulta Chat -->
-                    <div class="bg-white rounded-[2.5rem] p-8 shadow-2xl flex flex-col h-[550px] border border-slate-200 text-slate-900">
-                        <h3 class="text-xl font-bold mb-6 flex items-center"><span class="mr-3">🔬</span> Consulta Académica</h3>
-                        <div id="chat-history" class="flex-grow overflow-y-auto space-y-4 mb-6 pr-2 custom-scrollbar text-sm">
-                            <div class="bg-slate-100 p-4 rounded-2xl rounded-tl-none italic text-slate-500">
-                                Pregúntame sobre los efectos del ping-pong en la coordinación o la visión.
-                            </div>
-                        </div>
+                    <div class="bg-white p-8 rounded-[2.5rem] flex flex-col h-[550px] shadow-2xl text-slate-900">
+                        <h3 class="text-xl font-bold mb-6">Consulta Científica</h3>
+                        <div id="chat-history" class="flex-grow overflow-y-auto space-y-4 mb-6 pr-2 custom-scrollbar text-sm"></div>
                         <div class="flex gap-3">
-                            <input type="text" id="chat-input" placeholder="Escribe tu duda..." class="flex-grow bg-slate-100 border-none p-4 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition">
-                            <button onclick="runAiAction('chat')" id="btn-chat" class="bg-blue-600 hover:bg-blue-700 text-white px-6 rounded-2xl font-bold transition">➤</button>
+                            <input type="text" id="chat-input" placeholder="Tu pregunta..." class="flex-grow bg-slate-100 p-4 rounded-xl outline-none">
+                            <button onclick="runAiAction('chat')" class="bg-blue-600 text-white px-6 rounded-2xl font-bold">➤</button>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- VISTA: CIENCIA -->
-        <section id="sec-ciencia" class="section-view max-w-4xl mx-auto px-6 py-20">
-            <div class="text-center mb-16">
-                <h2 class="text-4xl font-bold">Base Científica</h2>
-                <p class="text-slate-500 mt-4">¿Por qué este deporte es único para el envejecimiento activo?</p>
-            </div>
-            
-            <div class="space-y-8">
-                <div class="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm">
-                    <h3 class="text-2xl font-bold text-red-500 mb-4">Estimulación del Hipocampo</h3>
-                    <p class="text-slate-600 leading-relaxed text-lg italic">
-                        El tenis de mesa exige seguir la bola a gran velocidad, lo que aumenta el flujo sanguíneo cerebral y promueve la neurogénesis, clave para combatir el Alzheimer.
-                    </p>
-                </div>
-                <div class="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm">
-                    <h3 class="text-2xl font-bold text-red-500 mb-4">Equilibrio Dinámico</h3>
-                    <p class="text-slate-600 leading-relaxed text-lg italic">
-                        A diferencia de caminar, requiere ajustes posturales constantes en milisegundos, entrenando los mecanorreceptores de las articulaciones y previniendo caídas fortuitas.
-                    </p>
-                </div>
+        <!-- CIENCIA -->
+        <section id="sec-ciencia" class="section-view max-w-4xl mx-auto px-6 py-20 text-center">
+            <h2 class="text-4xl font-bold mb-10">Base Académica</h2>
+            <div class="bg-white p-10 border rounded-[2.5rem] text-left shadow-sm">
+                <p class="text-slate-600 text-xl leading-relaxed italic">El tenis de mesa activa el hipocampo, previniendo el Alzheimer según estudios en ResearchGate.</p>
             </div>
         </section>
-
     </main>
-
-    <footer class="bg-white border-t border-slate-200 py-12 text-center text-slate-400 text-sm">
-        <p>© 2024 PingPong+65 - Basado en evidencias científicas reales.</p>
-    </footer>
 
     <script>
         // ==========================================
         // 🔑 CONFIGURACIÓN DEFINITIVA 🔑
         // ==========================================
-        const apiKey = "AIzaSyCO5YLMT3bY3g14SE00wrVt5KJzvYNPr10";
+        // Pega tu llave dentro de las comillas. No añadas comas ni puntos al final.
+        const rawApiKey = "AIzaSyCBbQLqaY0-T6dwR2K3knNUPUM-QIYZFL4"; 
         // ==========================================
 
-        const API_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent";
+        const cleanKey = rawApiKey.trim().replace(/['";\s]/g, "");
+        const MODEL_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 
         function showSection(id) {
             document.querySelectorAll('.section-view').forEach(v => v.classList.remove('active'));
-            const target = document.getElementById(`sec-${id}`);
-            if(target) target.classList.add('active');
-
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.classList.remove('active');
-                if(link.id === `nav-${id}`) link.classList.add('active');
-            });
-
+            document.getElementById(`sec-${id}`).classList.add('active');
             window.scrollTo(0,0);
             if(id === 'beneficios' && !chartInstance) updateChart('fisico');
         }
 
-        // --- LÓGICA DE GRÁFICOS ---
         const chartLib = {
-            fisico: {
-                title: "Impacto Físico",
-                desc: "Mejora de reflejos y equilibrio dinámico.",
-                list: ["Equilibrio reactivo +35%", "Coordinación ojo-mano", "Bajo impacto articular"],
-                type: 'radar',
-                labels: ['Equilibrio', 'Reflejos', 'Resistencia', 'Agilidad', 'Fuerza'],
-                values: [85, 95, 65, 90, 60]
-            },
-            mental: {
-                title: "Salud Mental",
-                desc: "Estimulación de funciones ejecutivas cerebrales.",
-                list: ["Atención sostenida", "Memoria visual corta", "Neuroplasticidad activa"],
-                type: 'bar',
-                labels: ['Memoria', 'Atención', 'Estrategia', 'Reacción'],
-                values: [80, 90, 85, 95]
-            },
-            social: {
-                title: "Impacto Social",
-                desc: "Prevención del aislamiento y soledad.",
-                list: ["Integración grupal", "Aumento de dopamina", "Motivación compartida"],
-                type: 'doughnut',
-                labels: ['Bienestar', 'Comunidad', 'Ánimo'],
-                values: [40, 35, 25]
-            }
+            fisico: { title: "Salud Física", labels: ['Equilibrio', 'Reflejos', 'Agilidad', 'Fuerza'], values: [90, 95, 85, 60], type: 'radar' },
+            mental: { title: "Salud Mental", labels: ['Memoria', 'Atención', 'Estrategia', 'Reacción'], values: [80, 90, 85, 95], type: 'bar' },
+            social: { title: "Salud Social", labels: ['Bienestar', 'Comunidad', 'Ánimo'], values: [40, 35, 25], type: 'doughnut' }
         };
-
         let chartInstance = null;
         function updateChart(key) {
-            const data = chartLib[key];
-            document.getElementById('chart-title').innerText = data.title;
-            document.getElementById('chart-list').innerHTML = data.list.map(l => `<li class="flex items-center"><span class="text-red-500 mr-3">✔</span>${l}</li>`).join('');
-
+            const d = chartLib[key];
+            document.getElementById('chart-title').innerText = d.title;
             if(chartInstance) chartInstance.destroy();
-            const ctx = document.getElementById('healthChart').getContext('2d');
-            chartInstance = new Chart(ctx, {
-                type: data.type,
-                data: {
-                    labels: data.labels,
-                    datasets: [{
-                        label: 'Mejora %',
-                        data: data.values,
-                        backgroundColor: key === 'fisico' ? 'rgba(239, 68, 68, 0.2)' : (key === 'mental' ? 'rgba(59, 130, 246, 0.2)' : ['#EF4444', '#3B82F6', '#F59E0B']),
-                        borderColor: '#EF4444',
-                        borderWidth: 2
-                    }]
-                },
+            chartInstance = new Chart(document.getElementById('healthChart'), {
+                type: d.type,
+                data: { labels: d.labels, datasets: [{ label: 'Mejora %', data: d.values, backgroundColor: 'rgba(239, 68, 68, 0.2)', borderColor: '#EF4444', borderWidth: 2 }] },
                 options: { responsive: true, maintainAspectRatio: false }
             });
         }
 
-        // --- MOTOR DE IA (VERSIÓN v1 DEFINITIVA) ---
-        async function fetchGemini(userMessage, systemPrompt) {
-            if(!apiKey) return "Error: Falta la llave API en el código.";
-            
-            const fullPrompt = `${systemPrompt}\n\nPregunta: ${userMessage}`;
+        async function fetchGemini(prompt, system) {
+            if(!cleanKey || cleanKey.length < 10) return "⚠️ Error: La llave que has pegado parece incompleta o corta.";
             
             try {
-                const response = await fetch(`${API_URL}?key=${apiKey}`, {
+                const response = await fetch(`${MODEL_URL}?key=${cleanKey}`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: fullPrompt }] }]
+                        contents: [{parts: [{text: `${system}\n\nPregunta: ${prompt}`}]}]
                     })
                 });
-                
                 const data = await response.json();
-                
-                if(!response.ok) {
-                    return `Error técnico de Google (${response.status}): ${data.error?.message || "Revisa si tu llave API es correcta"}`;
+                if(data.error) {
+                    if(data.error.status === "INVALID_ARGUMENT") return "❌ Error: Google dice que tu llave NO es válida. Por favor, crea una LLAVE NUEVA en AI Studio.";
+                    return `❌ Error de Google: ${data.error.message}`;
                 }
-
-                return data.candidates?.[0]?.content?.parts?.[0]?.text || "La IA no ha devuelto contenido.";
-            } catch(e) {
-                return "Error de red: No se pudo conectar con Google. Revisa tu conexión a internet.";
-            }
+                return data.candidates[0].content.parts[0].text;
+            } catch(e) { return "❌ Error de conexión. Revisa tu internet."; }
         }
 
         async function runAiAction(type) {
@@ -344,24 +178,20 @@
                 const out = document.getElementById('ai-plan-output');
                 const btn = document.getElementById('btn-plan');
                 btn.disabled = true; btn.innerHTML = `<span class="spinner"></span> Generando...`;
-                out.classList.remove('hidden'); out.innerHTML = "Consultando a la IA...";
-                
-                const prompt = `Crea un plan de 1 semana para nivel ${document.getElementById('ai-level').value} con objetivo ${document.getElementById('ai-goal').value}. Sé breve y motivador.`;
-                const res = await fetchGemini(prompt, "Eres un fisioterapeuta experto en geriatría.");
+                out.classList.remove('hidden'); out.innerHTML = "Analizando datos...";
+                const res = await fetchGemini(`Plan nivel ${document.getElementById('ai-level').value}, meta ${document.getElementById('ai-goal').value}.`, "Fisioterapeuta experto.");
                 out.innerHTML = res.replace(/\n/g, '<br>');
                 btn.disabled = false; btn.innerText = "Generar Plan";
             } else {
                 const inp = document.getElementById('chat-input');
                 const hist = document.getElementById('chat-history');
                 const q = inp.value.trim(); if(!q) return;
-                inp.value = "";
-                hist.innerHTML += `<div class="bg-blue-600 text-white p-4 rounded-2xl ml-8 shadow-sm">Tú: ${q}</div>`;
-                const ans = await fetchGemini(q, "Analista experto en los beneficios del tenis de mesa para mayores.");
-                hist.innerHTML += `<div class="bg-slate-100 p-4 rounded-2xl mr-8 text-slate-800 shadow-sm border border-slate-200 leading-relaxed"><b>IA:</b> ${ans}</div>`;
+                inp.value = ""; hist.innerHTML += `<div class="bg-blue-600 text-white p-4 rounded-2xl ml-8 shadow-sm">Tú: ${q}</div>`;
+                const ans = await fetchGemini(q, "Experto en salud y ping pong.");
+                hist.innerHTML += `<div class="bg-slate-100 p-4 rounded-2xl mr-8 text-slate-800 border"><b>IA:</b> ${ans}</div>`;
                 hist.scrollTop = hist.scrollHeight;
             }
         }
-
         window.onload = () => showSection('inicio');
     </script>
 </body>
